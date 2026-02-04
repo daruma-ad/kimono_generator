@@ -7,48 +7,48 @@
 // 設定
 // ===================================
 const CONFIG = {
-    // 着物データ（モデル画像を配置後に更新）
+    // 着物データ（マネキン画像を使用）
     kimonos: [
         {
             id: 1,
             name: '振袖 1',
-            image: 'images/NO1.png',
-            description: 'A stunning purple furisode (long-sleeved kimono) with vibrant gold and green floral patterns featuring peonies and chrysanthemums. Golden obi belt with intricate embroidery. Traditional Japanese formal style.'
+            image: 'images/kimono (1).jpg',
+            description: 'A vibrant yellow/gold furisode with red accents at the hem. Decorated with colorful peony, chrysanthemum, and cherry blossom patterns in pink, white, red, and turquoise. Purple obi belt with gold embroidery and green decorative cord (obijime).'
         },
         {
             id: 2,
             name: '振袖 2',
-            image: 'images/NO2.png',
-            description: 'An elegant deep green furisode with black gradients at the bottom, decorated with golden fans, cherry blossoms, and traditional Japanese motifs. Purple obi belt with plum blossom patterns.'
+            image: 'images/kimono (2).jpg',
+            description: 'A deep green and black furisode with purple gradients. Features vibrant floral patterns including red peonies, pink cherry blossoms, and white flowers. Golden-orange obi belt with gold decorative elements and small bag.'
         },
         {
             id: 3,
             name: '振袖 3',
-            image: 'images/NO3.png',
-            description: 'A sophisticated cream and gold furisode with delicate chrysanthemum patterns and golden embroidery. Elegant gold obi belt. Refined and luxurious appearance.'
+            image: 'images/kimono (3).jpg',
+            description: 'An elegant furisode displayed on mannequin with traditional Japanese patterns and colors.'
         },
         {
             id: 4,
             name: '振袖 4',
-            image: 'images/NO4.png',
-            description: 'A modern navy blue kimono with subtle patterns, paired with a dark brown obi belt. Simple yet elegant design suitable for formal occasions.'
+            image: 'images/kimono (4).jpg',
+            description: 'A traditional furisode displayed on mannequin featuring classic Japanese design elements.'
         },
         {
             id: 5,
             name: '振袖 5',
-            image: 'images/NO5.png',
-            description: 'A contemporary navy blue kimono with a brown/beige haori jacket layered on top. Artistic abstract patterns on the obi. Modern Japanese style.'
+            image: 'images/kimono (5).jpg',
+            description: 'A beautiful furisode displayed on mannequin with distinctive patterns and color combinations.'
         },
         {
             id: 6,
             name: '振袖 6',
-            image: 'images/NO6.png',
-            description: 'A classic cream-colored furisode with golden and orange floral patterns featuring fans and traditional motifs. Elegant gold obi belt. Traditional formal style.'
+            image: 'images/kimono (6).JPG',
+            description: 'A stunning furisode displayed on mannequin showcasing traditional Japanese craftsmanship.'
         }
     ],
 
-    // Gemini API設定
-    apiEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent',
+    // Gemini API設定 (Gemini 3 Pro Image Preview - Nano Banana Pro)
+    apiEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent',
 
     // ローカルストレージキー
     storageKeys: {
@@ -223,10 +223,10 @@ async function handleGenerate() {
     showLoading(true);
 
     try {
-        // 着物の説明テキストを取得
-        const kimonoDescription = state.selectedKimono.description;
+        // 着物画像をBase64に変換
+        const kimonoBase64 = await imageToBase64(state.selectedKimono.image);
 
-        // Gemini APIにリクエスト（顔写真のみ + 着物テキスト説明）
+        // Gemini APIにリクエスト（顔写真 + 着物画像）
         const response = await fetch(`${CONFIG.apiEndpoint}?key=${apiKey}`, {
             method: 'POST',
             headers: {
@@ -236,36 +236,40 @@ async function handleGenerate() {
                 contents: [{
                     parts: [
                         {
+                            text: `あなたは最高峰の画像合成と顔の同一性保持の専門家です。
+Image 1（人物のポートレート）と Image 2（マネキン）を元に、最高品質の一枚の写真を生成してください。
+
+【最重要指示：顔の同一性】
+- Image 1 の人物の顔の特徴を完全にコピーし、同一人物であることを保証してください。
+
+【着物の再現】
+- Image 2 の着物・帯・小物を忠実に再現してください。
+
+【出力】
+- 全身のポートレート写真。
+- 日本の伝統的な高級スタジオでの撮影。
+- 写真のようにリアルで、高精細な画像。`
+                        },
+                        {
                             inlineData: {
                                 mimeType: 'image/jpeg',
                                 data: state.customerPhotoBase64
                             }
                         },
                         {
-                            text: `Create a professional full-length portrait photograph for a kimono catalog.
-
-SUBJECT: A Japanese woman whose face resembles the uploaded photo.
-
-KIMONO: ${kimonoDescription}
-
-COMPOSITION (CRITICAL):
-- VERTICAL/PORTRAIT orientation (3:4 aspect ratio)
-- FULL LENGTH shot from head to tabi (Japanese socks) - MUST show entire body including feet
-- The kimono sleeves (furisode) must be fully visible
-- DO NOT crop at waist or chest - show the COMPLETE outfit
-
-STYLING:
-- Elegant updo hairstyle with traditional hair ornaments (kanzashi)
-- Standing pose, hands gently clasped in front
-- Slight smile, looking at camera
-- Professional studio lighting, white/cream background
-
-The image MUST show the complete kimono from collar to hem. Full body is absolutely required.`
+                            inlineData: {
+                                mimeType: 'image/jpeg',
+                                data: kimonoBase64
+                            }
                         }
                     ]
                 }],
                 generationConfig: {
-                    responseModalities: ['image', 'text']
+                    responseModalities: ['IMAGE'],
+                    imageConfig: {
+                        aspectRatio: '2:3',
+                        imageSize: '2K'
+                    }
                 }
             })
         });
