@@ -10,7 +10,13 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static('.')); // フロントエンドの静的ファイルを配信
+app.use(express.static('.', {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.html') || path.endsWith('.js') || path.endsWith('.css')) {
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+})); // フロントエンドの静的ファイルを配信（キャッシュ無効化設定付き）
 
 // Gemini API プロキシエンドポイント
 app.post('/api/generate', async (req, res) => {
