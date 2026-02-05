@@ -15,6 +15,14 @@ app.use(express.static('.')); // フロントエンドの静的ファイルを�
 // Gemini API プロキシエンドポイント
 app.post('/api/generate', async (req, res) => {
     try {
+        const { accessCode, ...geminiPayload } = req.body;
+
+        // アクセスコードの検証
+        const validCode = process.env.ACCESS_CODE || 'darumaya';
+        if (accessCode !== validCode) {
+            return res.status(403).json({ error: { message: 'アクセスコードが正しくありません。' } });
+        }
+
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey || apiKey === 'your_api_key_here') {
             return res.status(500).json({ error: { message: 'APIキーが設定されていません。サーバーの.envファイルを確認してください。' } });
@@ -28,7 +36,7 @@ app.post('/api/generate', async (req, res) => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(req.body)
+            body: JSON.stringify(geminiPayload)
         });
 
         const data = await response.json();

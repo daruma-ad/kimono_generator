@@ -50,9 +50,9 @@ const CONFIG = {
     // Gemini API設定 (自作プロキシサーバー経由)
     apiEndpoint: '/api/generate',
 
-    // ローカルストレージキー (プロキシ利用時は不要)
+    // ローカルストレージキー
     storageKeys: {
-        apiKey: 'kimono_app_api_key'
+        accessCode: 'kimono_app_access_code'
     }
 };
 
@@ -93,7 +93,7 @@ const elements = {
 function init() {
     renderKimonoGrid();
     setupEventListeners();
-    // checkApiKey(); // プロキシ経由なので不要
+    checkAccessCode();
     registerServiceWorker();
 }
 
@@ -203,7 +203,7 @@ async function processPhoto(file) {
 // 生成ボタン状態更新
 // ===================================
 function updateGenerateButton() {
-    const canGenerate = state.selectedKimono && state.customerPhoto;
+    const canGenerate = state.selectedKimono && state.customerPhoto && getAccessCode();
     elements.generateBtn.disabled = !canGenerate;
 }
 
@@ -212,6 +212,12 @@ function updateGenerateButton() {
 // ===================================
 async function handleGenerate() {
     if (state.isGenerating) return;
+
+    const accessCode = getAccessCode();
+    if (!accessCode) {
+        showModal(true);
+        return;
+    }
 
     state.isGenerating = true;
     showLoading(true);
@@ -227,6 +233,7 @@ async function handleGenerate() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
+                accessCode: accessCode,
                 contents: [{
                     parts: [
                         {
@@ -388,23 +395,22 @@ function handleRetry() {
 
 // ===================================
 // API設定
-// ===================================
-function getApiKey() {
-    return localStorage.getItem(CONFIG.storageKeys.apiKey);
+// ===================================// アクセスコード管理
+function getAccessCode() {
+    return localStorage.getItem(CONFIG.storageKeys.accessCode);
 }
 
-function checkApiKey() {
-    if (!getApiKey()) {
-        // APIキーがない場合はモーダルを表示
+function checkAccessCode() {
+    if (!getAccessCode()) {
         setTimeout(() => showModal(true), 500);
     }
     updateGenerateButton();
 }
 
 function saveApiKey() {
-    const apiKey = elements.apiKeyInput.value.trim();
-    if (apiKey) {
-        localStorage.setItem(CONFIG.storageKeys.apiKey, apiKey);
+    const code = elements.apiKeyInput.value.trim();
+    if (code) {
+        localStorage.setItem(CONFIG.storageKeys.accessCode, code);
         showModal(false);
         updateGenerateButton();
     }
@@ -412,7 +418,7 @@ function saveApiKey() {
 
 function showModal(show) {
     if (show) {
-        elements.apiKeyInput.value = getApiKey() || '';
+        elements.apiKeyInput.value = getAccessCode() || '';
         elements.apiModal.classList.add('active');
     } else {
         elements.apiModal.classList.remove('active');
