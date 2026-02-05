@@ -48,15 +48,17 @@
                     <span class="step-number">2</span>
                     <h2>お顔の写真をアップロード</h2>
                 </div>
-                <label for="photoInput" class="upload-area" id="uploadArea">
-                    <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                <div class="upload-area" id="uploadArea">
+                    <!-- 透明なinputを最前面に配置して全面をタップポイントにする -->
+                    <input type="file" id="photoInput" accept="image/*"
+                        style="position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10;">
                     <div class="upload-placeholder" id="uploadPlaceholder">
-                        <div class="upload-icon">📷</div>
+                        <div class="upload-icon">📸</div>
                         <p class="upload-text">タップして写真を選択</p>
                         <p class="upload-hint">または撮影してください</p>
                     </div>
                     <img id="previewImage" class="preview-image" alt="プレビュー">
-                </label>
+                </div>
                 <p class="photo-tip">💡 正面を向いた、お顔がはっきり写った写真がおすすめです</p>
             </section>
 
