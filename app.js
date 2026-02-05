@@ -11,39 +11,39 @@ const CONFIG = {
     kimonos: [
         {
             id: 1,
-            name: '振袖 1',
-            image: 'images/kimono (1).jpg',
-            description: 'A vibrant yellow/gold furisode with red accents at the hem. Decorated with colorful peony, chrysanthemum, and cherry blossom patterns in pink, white, red, and turquoise. Purple obi belt with gold embroidery and green decorative cord (obijime).'
+            name: '振袖 NO1',
+            image: 'images/NO1.png',
+            description: 'Traditional Japanese furisode with elegant patterns.'
         },
         {
             id: 2,
-            name: '振袖 2',
-            image: 'images/kimono (2).jpg',
-            description: 'A deep green and black furisode with purple gradients. Features vibrant floral patterns including red peonies, pink cherry blossoms, and white flowers. Golden-orange obi belt with gold decorative elements and small bag.'
+            name: '振袖 NO2',
+            image: 'images/NO2.png',
+            description: 'Beautiful furisode with vibrant colors and floral designs.'
         },
         {
             id: 3,
-            name: '振袖 3',
-            image: 'images/kimono (3).jpg',
-            description: 'An elegant furisode displayed on mannequin with traditional Japanese patterns and colors.'
+            name: '振袖 NO3',
+            image: 'images/NO3.png',
+            description: 'Classic furisode formal wear for special occasions.'
         },
         {
             id: 4,
-            name: '振袖 4',
-            image: 'images/kimono (4).jpg',
-            description: 'A traditional furisode displayed on mannequin featuring classic Japanese design elements.'
+            name: '振袖 NO4',
+            image: 'images/NO4.png',
+            description: 'Sophisticated furisode showcasing traditional craftsmanship.'
         },
         {
             id: 5,
-            name: '振袖 5',
-            image: 'images/kimono (5).jpg',
-            description: 'A beautiful furisode displayed on mannequin with distinctive patterns and color combinations.'
+            name: '振袖 NO5',
+            image: 'images/NO5.png',
+            description: 'Stunning furisode with intricate embroidery and patterns.'
         },
         {
             id: 6,
-            name: '振袖 6',
-            image: 'images/kimono (6).JPG',
-            description: 'A stunning furisode displayed on mannequin showcasing traditional Japanese craftsmanship.'
+            name: '振袖 NO6',
+            image: 'images/NO6.png',
+            description: 'Elegant furisode perfect for virtual try-on experience.'
         }
     ],
 
