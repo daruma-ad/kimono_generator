@@ -47,10 +47,10 @@ const CONFIG = {
         }
     ],
 
-    // Gemini API設定 (Gemini 3 Pro Image Preview - Nano Banana Pro)
-    apiEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent',
+    // Gemini API設定 (自作プロキシサーバー経由)
+    apiEndpoint: '/api/generate',
 
-    // ローカルストレージキー
+    // ローカルストレージキー (プロキシ利用時は不要)
     storageKeys: {
         apiKey: 'kimono_app_api_key'
     }
@@ -93,7 +93,7 @@ const elements = {
 function init() {
     renderKimonoGrid();
     setupEventListeners();
-    checkApiKey();
+    // checkApiKey(); // プロキシ経由なので不要
     registerServiceWorker();
 }
 
@@ -203,7 +203,7 @@ async function processPhoto(file) {
 // 生成ボタン状態更新
 // ===================================
 function updateGenerateButton() {
-    const canGenerate = state.selectedKimono && state.customerPhoto && getApiKey();
+    const canGenerate = state.selectedKimono && state.customerPhoto;
     elements.generateBtn.disabled = !canGenerate;
 }
 
@@ -213,12 +213,6 @@ function updateGenerateButton() {
 async function handleGenerate() {
     if (state.isGenerating) return;
 
-    const apiKey = getApiKey();
-    if (!apiKey) {
-        showModal(true);
-        return;
-    }
-
     state.isGenerating = true;
     showLoading(true);
 
@@ -226,8 +220,8 @@ async function handleGenerate() {
         // 着物画像をBase64に変換
         const kimonoBase64 = await imageToBase64(state.selectedKimono.image);
 
-        // Gemini APIにリクエスト（顔写真 + 着物画像）
-        const response = await fetch(`${CONFIG.apiEndpoint}?key=${apiKey}`, {
+        // 自作プロキシサーバーにリクエスト
+        const response = await fetch(CONFIG.apiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

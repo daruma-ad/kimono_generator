@@ -2,3 +2,4 @@
 node_modules/
 kimono_*.png
 *.log
+.env
