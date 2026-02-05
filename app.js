@@ -118,8 +118,7 @@ function setupEventListeners() {
     // 着物選択
     elements.kimonoGrid.addEventListener('click', handleKimonoSelect);
 
-    // 写真アップロード
-    elements.uploadArea.addEventListener('click', () => elements.photoInput.click());
+    // 写真アップロード (labelがphotoInputを起動するためJSからのclick()は削除)
     elements.photoInput.addEventListener('change', handlePhotoUpload);
 
     // ドラッグ&ドロップ
