@@ -301,6 +301,8 @@ body::before {
     justify-content: center;
     gap: 0.5rem;
     transition: var(--transition-normal);
+    pointer-events: none;
+    /* タップイベントを親のlabelに通す */
 }
 
 .upload-area.has-image .upload-placeholder {
