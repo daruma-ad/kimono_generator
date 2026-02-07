@@ -52,7 +52,13 @@ const CONFIG = {
 
     // ローカルストレージキー
     storageKeys: {
-        accessCode: 'kimono_app_access_code'
+        accessCode: 'kimono_app_access_code',
+        usageLimit: 'kimono_app_usage_limit'
+    },
+
+    // 利用制限
+    limits: {
+        maxDaily: 3
     }
 };
 
@@ -202,8 +208,19 @@ async function processPhoto(file) {
 // 生成ボタン状態更新
 // ===================================
 function updateGenerateButton() {
-    const canGenerate = state.selectedKimono && state.customerPhoto && getAccessCode();
+    const remaining = getRemainingUsage();
+    const canGenerate = state.selectedKimono && state.customerPhoto && getAccessCode() && remaining > 0;
     elements.generateBtn.disabled = !canGenerate;
+
+    // ボタンのテキストを残回数に合わせて更新（任意）
+    const btnText = elements.generateBtn.querySelector('.btn-text');
+    if (btnText) {
+        if (remaining <= 0) {
+            btnText.textContent = '本日の上限に達しました';
+        } else {
+            btnText.textContent = `生成する (残り ${remaining} 回)`;
+        }
+    }
 }
 
 // ===================================
@@ -276,7 +293,14 @@ Image 1（人物のポートレート）と Image 2（マネキン）を元に�
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error?.message || 'API呼び出しに失敗しました');
+            const message = error.error?.message || 'API呼び出しに失敗しました';
+
+            // 429 エラー (利用制限) の場合は、ローカルのボタン表示も更新しておく
+            if (response.status === 429) {
+                updateGenerateButton();
+            }
+
+            throw new Error(message);
         }
 
         const data = await response.json();
@@ -285,8 +309,14 @@ Image 1（人物のポートレート）と Image 2（マネキン）を元に�
         const imagePart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
 
         if (imagePart) {
+            // 利用回数をカウントアップ
+            incrementUsageCount();
+
             const imageData = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
             showResult(imageData);
+
+            // ボタンの状態を更新（残回数を反映）
+            updateGenerateButton();
         } else {
             // 画像生成ができなかった場合のフォールバック
             const textPart = data.candidates?.[0]?.content?.parts?.find(p => p.text);
@@ -422,6 +452,42 @@ function showModal(show) {
     } else {
         elements.apiModal.classList.remove('active');
     }
+}
+
+// ===================================
+// 利用制限管理
+// ===================================
+function getRemainingUsage() {
+    const today = new Date().toLocaleDateString();
+    const storageData = localStorage.getItem(CONFIG.storageKeys.usageLimit);
+
+    let usage = { date: today, count: 0 };
+
+    if (storageData) {
+        const parsed = JSON.parse(storageData);
+        if (parsed.date === today) {
+            usage = parsed;
+        }
+    }
+
+    return Math.max(0, CONFIG.limits.maxDaily - usage.count);
+}
+
+function incrementUsageCount() {
+    const today = new Date().toLocaleDateString();
+    const storageData = localStorage.getItem(CONFIG.storageKeys.usageLimit);
+
+    let usage = { date: today, count: 0 };
+
+    if (storageData) {
+        const parsed = JSON.parse(storageData);
+        if (parsed.date === today) {
+            usage = parsed;
+        }
+    }
+
+    usage.count += 1;
+    localStorage.setItem(CONFIG.storageKeys.usageLimit, JSON.stringify(usage));
 }
 
 // ===================================

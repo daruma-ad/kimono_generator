@@ -1,3 +1,4 @@
+const { kv } = require('@vercel/kv');
 const fetch = require('node-fetch');
 
 /**
@@ -17,16 +18,26 @@ module.exports = async (req, res) => {
     }
 
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: { message: 'Method Not Allowed' } });
+        return res.status(429).json({ error: { message: 'Method Not Allowed' } });
     }
 
     try {
         const { accessCode, ...geminiPayload } = req.body;
 
-        // アクセスコードの検証
+        // アクセスコードの検証 (キャッシュ回避のためのIP制限の前に実行)
         const validCode = process.env.ACCESS_CODE || 'darumaya';
         if (accessCode !== validCode) {
             return res.status(403).json({ error: { message: 'アクセスコードが正しくありません。' } });
+        }
+
+        // IPベースの利用制限チェック (Vercel KVを使用)
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const today = new Date().toISOString().split('T')[0];
+        const limitKey = `limit:${ip}:${today}`;
+
+        const currentUsage = await kv.get(limitKey) || 0;
+        if (currentUsage >= 3) {
+            return res.status(429).json({ error: { message: '本日の利用上限（3回）に達しました。また明日お試しください。' } });
         }
 
         const apiKey = process.env.GEMINI_API_KEY;
@@ -46,6 +57,13 @@ module.exports = async (req, res) => {
         });
 
         const data = await response.json();
+
+        // 画像生成に成功した場合のみ回数をカウントアップ
+        if (response.ok && data.candidates?.[0]?.content?.parts?.some(p => p.inlineData)) {
+            await kv.incr(limitKey);
+            await kv.expire(limitKey, 86400); // 24時間で自動消去
+        }
+
         res.status(response.status).json(data);
     } catch (error) {
         console.error('API Error:', error);
