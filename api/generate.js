@@ -8,7 +8,7 @@ const fetch = require('node-fetch');
 module.exports = async (req, res) => {
     // CORS 設定
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     // プリフライトリクエスト (OPTIONS) への対応
@@ -17,8 +17,16 @@ module.exports = async (req, res) => {
         return;
     }
 
+    // 環境変数から回数制限を取得（未設定ならデフォルト3）
+    const dailyLimit = parseInt(process.env.DAILY_LIMIT || '3', 10);
+
+    // GET リクエストの場合は設定情報を返す
+    if (req.method === 'GET') {
+        return res.status(200).json({ dailyLimit });
+    }
+
     if (req.method !== 'POST') {
-        return res.status(429).json({ error: { message: 'Method Not Allowed' } });
+        return res.status(405).json({ error: { message: 'Method Not Allowed' } });
     }
 
     try {
@@ -36,8 +44,8 @@ module.exports = async (req, res) => {
         const limitKey = `limit:${ip}:${today}`;
 
         const currentUsage = await kv.get(limitKey) || 0;
-        if (currentUsage >= 3) {
-            return res.status(429).json({ error: { message: '本日の利用上限（3回）に達しました。また明日お試しください。' } });
+        if (currentUsage >= dailyLimit) {
+            return res.status(429).json({ error: { message: `本日の利用上限（${dailyLimit}回）に達しました。また明日お試しください。` } });
         }
 
         const apiKey = process.env.GEMINI_API_KEY;

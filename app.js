@@ -96,11 +96,14 @@ const elements = {
 // ===================================
 // 初期化
 // ===================================
-function init() {
+async function init() {
     renderKimonoGrid();
     setupEventListeners();
     checkAccessCode();
     registerServiceWorker();
+
+    // サーバーから利用制限設定を取得
+    await fetchUsageLimit();
 }
 
 // ===================================
@@ -488,6 +491,21 @@ function incrementUsageCount() {
 
     usage.count += 1;
     localStorage.setItem(CONFIG.storageKeys.usageLimit, JSON.stringify(usage));
+}
+
+async function fetchUsageLimit() {
+    try {
+        const response = await fetch(CONFIG.apiEndpoint); // GET request
+        if (response.ok) {
+            const data = await response.json();
+            if (data.dailyLimit) {
+                CONFIG.limits.maxDaily = data.dailyLimit;
+                updateGenerateButton();
+            }
+        }
+    } catch (error) {
+        console.warn('Could not fetch usage limit from server, using default:', error);
+    }
 }
 
 // ===================================
