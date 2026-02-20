@@ -43,7 +43,14 @@ module.exports = async (req, res) => {
         const today = new Date().toISOString().split('T')[0];
         const limitKey = `limit:${ip}:${today}`;
 
-        const currentUsage = await kv.get(limitKey) || 0;
+        let currentUsage = 0;
+        try {
+            currentUsage = await kv.get(limitKey) || 0;
+        } catch (kvError) {
+            console.error('KV Get Error (Redis might be down):', kvError);
+            // Redisが死んでいても処理を続行（制限なしの状態にする）
+        }
+
         if (currentUsage >= dailyLimit) {
             return res.status(429).json({ error: { message: `本日の利用上限（${dailyLimit}回）に達しました。また明日お試しください。` } });
         }
@@ -66,10 +73,19 @@ module.exports = async (req, res) => {
 
         const data = await response.json();
 
+        if (!response.ok) {
+            console.error('Gemini API Error Detail:', JSON.stringify(data, null, 2));
+            return res.status(response.status).json(data);
+        }
+
         // 画像生成に成功した場合のみ回数をカウントアップ
-        if (response.ok && data.candidates?.[0]?.content?.parts?.some(p => p.inlineData)) {
-            await kv.incr(limitKey);
-            await kv.expire(limitKey, 86400); // 24時間で自動消去
+        if (data.candidates?.[0]?.content?.parts?.some(p => p.inlineData)) {
+            try {
+                await kv.incr(limitKey);
+                await kv.expire(limitKey, 86400); // 24時間で自動消去
+            } catch (kvError) {
+                console.error('KV Update Error (Redis might be down):', kvError);
+            }
         }
 
         res.status(response.status).json(data);

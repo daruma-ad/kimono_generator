@@ -46,6 +46,9 @@ app.post('/api/generate', async (req, res) => {
         });
 
         const data = await response.json();
+        if (!response.ok) {
+            console.error('Gemini API Error Detail:', JSON.stringify(data, null, 2));
+        }
         res.status(response.status).json(data);
     } catch (error) {
         console.error('Proxy error:', error);
